@@ -14,8 +14,7 @@ set(GROUP_NO 00 CACHE STRING "Your group number (two digits)")
 if (NOT ${GROUP_NO} STREQUAL 00)
     set(CPACK_GENERATOR TGZ)
     set(CPACK_PACKAGE_FILE_NAME "CS5220Group${GROUP_NO}_hw2")
-    # install(FILES serial.cpp openmp.cpp DESTINATION .)
-    install(FILES monte-carlo-serial.cpp.cpp openmp.cpp DESTINATION .)
+    install(FILES monte-carlo-serial.cpp. monte-carlo-open.cpp DESTINATION .)
     install(FILES ${CPACK_PACKAGE_FILE_NAME}.pdf DESTINATION .)
     include(CPack)
 endif ()
@@ -31,9 +30,9 @@ endif ()
 
 add_executable(serial main.cpp monte-carlo-serial.cpp)
 
-# add_executable(openmp main.cpp openmp.cpp common.h)
-# target_link_libraries(openmp PRIVATE OpenMP::OpenMP_CXX)
+add_executable(openmp main.cpp monte-carlo-open.cpp)
+target_link_libraries(openmp PRIVATE OpenMP::OpenMP_CXX)
 
 # Copy the job scripts
 configure_file(job-serial job-serial COPYONLY)
-# configure_file(job-openmp job-openmp COPYONLY)
+configure_file(job-openmp job-openmp COPYONLY)

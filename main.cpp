@@ -28,7 +28,6 @@ int find_int_arg(int argc, char** argv, const char* option, int default_value) {
 // ==============
 // Main Function
 // ==============
-
 int main(int argc, char** argv) {
     // Parse Args
     if (find_arg_idx(argc, argv, "-h") >= 0) {
@@ -40,8 +39,8 @@ int main(int argc, char** argv) {
     int num_iterations = find_int_arg(argc, argv, "-s", 1000000);
     // Algorithm
     auto start_time = std::chrono::steady_clock::now();
+    init_sim();
     result_type result;
-    
 #ifdef _OPENMP
 #pragma omp parallel default(shared)
 #endif

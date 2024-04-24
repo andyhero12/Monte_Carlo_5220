@@ -1,6 +1,6 @@
 #include <iostream>
 #include "monte-carlo.h"
-
+#include <omp.h>
 constexpr theta_type rand_two_div_max = 2.0 / RAND_MAX;
 // Function to generate a random number in the range [0, 1)
 theta_type generate_rand() {
@@ -8,7 +8,6 @@ theta_type generate_rand() {
     theta_type casted_seed = rand();
     return rand_two_div_max * casted_seed - 1;
 }
-
 
 // Box muller algorithm
 theta_type gaussian_box_muller()
@@ -39,34 +38,37 @@ theta_type gaussian_box_muller()
   return x * sqrt(-2 * log(euclid_sq) / euclid_sq);
 }
 
+
 void init_sim(){
+  omp_set_num_threads(64);
+  std::cout << "NUM THREADS " << omp_get_num_threads() <<'\n';
 }
 // Pricing a European vanilla option with a Monte Carlo method
 void monte_carlo_both_price(result_type &result, int iterations)
 {
-
-  const theta_type S_adjust = S * exp(T * (r - 0.5 * v * v));
-  const theta_type sqrt_const = sqrt(v * v * T);
+  
+  srand(int(time(NULL)) ^ omp_get_thread_num());
+  theta_type S_adjust = S * exp(T * (r - 0.5 * v * v));
+  theta_type sqrt_const = sqrt(v * v * T);
   theta_type S_cur = 0.0;
   theta_type call_payoff_sum = 0.0;
   theta_type put_payoff_sum = 0.0;
-  
+
   for (int i = 0; i < iterations; i++) {
-    theta_type gauss_bm = gaussian_box_muller();
-    S_cur = S_adjust * exp(sqrt_const * gauss_bm);
-    theta_type zero1 = 0.0;
-    theta_type zero2 = 0.0;
-    theta_type call_val = S_cur - K;
-    theta_type put_val = K - S_cur;
-    call_payoff_sum += fmax(call_val, zero1);
-    put_payoff_sum += fmax(put_val, zero2);
+      theta_type gauss_bm = gaussian_box_muller();
+      S_cur = S_adjust * exp(sqrt_const * gauss_bm);
+      theta_type zero1 = 0.0;
+      theta_type zero2 = 0.0;
+      theta_type call_val = S_cur - K;
+      theta_type put_val = K - S_cur;
+      call_payoff_sum += fmax(call_val, zero1);
+      put_payoff_sum += fmax(put_val, zero2);
   }
-  
+    theta_type cast_num_sims = num_sims;
+    theta_type call = (call_payoff_sum / cast_num_sims) * exp(-r * T);
+    theta_type put = (put_payoff_sum / cast_num_sims) * exp(-r * T);
 
-  theta_type cast_num_sims = num_sims;
-  theta_type call = (call_payoff_sum / cast_num_sims) * exp(-r * T);
-  theta_type put = (put_payoff_sum / cast_num_sims) * exp(-r * T);
+    result.call = call;
+    result.put = put;
 
-  result.call = call;
-  result.put = put;
 }
