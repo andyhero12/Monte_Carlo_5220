@@ -19,7 +19,7 @@ theta_type generate_rand();
 
 theta_type gaussian_box_muller();
 
-void monte_carlo_both_price(result_type &result);
+void monte_carlo_both_price(result_type &result, int iterations);
 
 struct result_type {
 theta_type call; 

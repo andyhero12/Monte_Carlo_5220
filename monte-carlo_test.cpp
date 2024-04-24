@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
   // Calculate the call/put values via Monte Carlo
   result_type result;
-  monte_carlo_both_price(result);
+  monte_carlo_both_price(result,1000000);
   theta_type call = result.call;
   theta_type put = result.put;
   // Finally we output the parameters and prices

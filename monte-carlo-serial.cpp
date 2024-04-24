@@ -1,21 +1,6 @@
 #include <iostream>
 #include "monte-carlo.h"
 
-// ap_uint<32> lfsr1 = 0xdcba;  // Initial seed
-// ap_uint<32> lfsr2 = 1234;  // Initial seed
-
-// // PRNG - pseduo random number generator using linear feedback shift registers
-// unsigned int pseudo_random(ap_uint<32>& lfsr) {
-//   bool b_32 = lfsr.get_bit(32-32);
-//   bool b_22 = lfsr.get_bit(32-22);
-//   bool b_2 = lfsr.get_bit(32-2);
-//   bool b_1 = lfsr.get_bit(32-1);
-//   bool new_bit = b_32 ^ b_22 ^ b_2 ^ b_1;
-//   lfsr = lfsr >> 1;
-//   lfsr.set_bit(31, new_bit);
-//   return lfsr.to_uint();
-// }
-
 constexpr theta_type rand_two_div_max = 2.0 / RAND_MAX;
 // Function to generate a random number in the range [0, 1)
 theta_type generate_rand1() {
@@ -29,50 +14,6 @@ theta_type generate_rand2() {
     // theta_type casted_seed = pseudo_random(lfsr2);
     theta_type casted_seed = rand();
     return rand_two_div_max * casted_seed - 1;
-}
-
-// custom log function 
-template <typename T>
-T custom_log(const T& x)
-{
-  if (x <= 0)
-  {
-    std::cerr << "Error: Input must be greater than 0" << std::endl;
-    return -1.0; // Error value
-  }
-  
-  const int logTerms = 10;
-
-  T result = 0.0;
-  T term = (x - 1) / (x + 1);
-  T term_squared = term * term;
-  T numerator = term;
-  T denominator = 1;
-  for (int i = 1; i <= logTerms; i++)
-  {
-    result += numerator / denominator;
-    numerator *= term_squared;
-    denominator += 2;
-  }
-
-  return 2 * result;
-}
-
-// custom exp function
-template <typename T>
-T custom_exp(const T& x)
-{
-  T result = 1.0;
-  T term = 1.0;
-  T factorial = 1.0;
-  const int expTerms = 10;
-  for (int i = 1; i <= expTerms; i++)
-  {
-    term *= x / i;
-    result += term;
-  }
-
-  return result;
 }
 
 // Box muller algorithm
@@ -101,22 +42,22 @@ theta_type gaussian_box_muller()
     }
   }
   
-  return x * sqrt(-2 * custom_log<theta_type>(euclid_sq) / euclid_sq);
+  return x * sqrt(-2 * log(euclid_sq) / euclid_sq);
 }
 
 // Pricing a European vanilla option with a Monte Carlo method
-void monte_carlo_both_price(result_type &result)
+void monte_carlo_both_price(result_type &result, int iterations)
 {
 
-  const theta_type S_adjust = S * custom_exp<theta_type>(T * (r - 0.5 * v * v));
+  const theta_type S_adjust = S * exp(T * (r - 0.5 * v * v));
   const theta_type sqrt_const = sqrt(v * v * T);
   theta_type S_cur = 0.0;
   theta_type call_payoff_sum = 0.0;
   theta_type put_payoff_sum = 0.0;
   
-  for (int i = 0; i < 1000000; i++) {
+  for (int i = 0; i < iterations; i++) {
     theta_type gauss_bm = gaussian_box_muller();
-    S_cur = S_adjust * custom_exp<theta_type>(sqrt_const * gauss_bm);
+    S_cur = S_adjust * exp(sqrt_const * gauss_bm);
     theta_type zero1 = 0.0;
     theta_type zero2 = 0.0;
     theta_type call_val = S_cur - K;
@@ -127,8 +68,8 @@ void monte_carlo_both_price(result_type &result)
   
 
   theta_type cast_num_sims = num_sims;
-  theta_type call = (call_payoff_sum / cast_num_sims) * custom_exp<theta_type>(-r * T);
-  theta_type put = (put_payoff_sum / cast_num_sims) * custom_exp<theta_type>(-r * T);
+  theta_type call = (call_payoff_sum / cast_num_sims) * exp(-r * T);
+  theta_type put = (put_payoff_sum / cast_num_sims) * exp(-r * T);
 
   result.call = call;
   result.put = put;
