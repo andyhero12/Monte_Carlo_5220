@@ -10,8 +10,6 @@
 static int numSMs;
 static theta_type* calls;
 static theta_type* putOptionValues;
-std::default_random_engine generator;
-std::uniform_real_distribution<double> distribution(0.0,1.0);
 
 void init_sim(){
   cudaDeviceGetAttribute(&numSMs, cudaDevAttrMultiProcessorCount,0);

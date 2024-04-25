@@ -25,7 +25,7 @@ if (NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
             "module swap ${Prg-${CMAKE_C_COMPILER_ID}} PrgEnv-gnu")
 endif ()
 
-add_executable(gpu main.cu monte-carlo.cu common.h)
+add_executable(gpu main.cu monte-carlo.cu)
 target_compile_features(gpu PRIVATE cxx_std_17)
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -arch=sm_60")
 
