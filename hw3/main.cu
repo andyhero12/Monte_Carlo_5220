@@ -7,26 +7,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
-
-// =================
-// Helper Functions
-// =================
-
-// I/O routines
-void save(std::ofstream& fsave, particle_t* parts, int num_parts, double size) {
-    static bool first = true;
-
-    if (first) {
-        fsave << num_parts << " " << size << std::endl;
-        first = false;
-    }
-
-    for (int i = 0; i < num_parts; ++i) {
-        fsave << parts[i].x << " " << parts[i].y << std::endl;
-    }
-
-    fsave << std::endl;
-}
+#include "monte-carlo.h"
 
 // Particle Initialization
 void init_particles(particle_t* parts, int num_parts, double size, int part_seed) {
@@ -79,73 +60,58 @@ int find_int_arg(int argc, char** argv, const char* option, int default_value) {
     return default_value;
 }
 
-char* find_string_option(int argc, char** argv, const char* option, char* default_value) {
-    int iplace = find_arg_idx(argc, argv, option);
-
-    if (iplace >= 0 && iplace < argc - 1) {
-        return argv[iplace + 1];
-    }
-
-    return default_value;
-}
-
 // ==============
 // Main Function
 // ==============
 
 int main(int argc, char** argv) {
+
     // Parse Args
     if (find_arg_idx(argc, argv, "-h") >= 0) {
         std::cout << "Options:" << std::endl;
-        std::cout << "-h: see this help" << std::endl;
-        std::cout << "-n <int>: set number of particles" << std::endl;
-        std::cout << "-o <filename>: set the output file name" << std::endl;
-        std::cout << "-s <int>: set particle initialization seed" << std::endl;
+        std::cout << "-s <int>: set num iterations" << std::endl;
         return 0;
     }
 
-    // Open Output File
-    char* savename = find_string_option(argc, argv, "-o", nullptr);
-    std::ofstream fsave(savename);
+    int num_iterations = find_int_arg(argc, argv, "-s", 1000000);
 
-    // Initialize Particles
-    int num_parts = find_int_arg(argc, argv, "-n", 1000);
-    int part_seed = find_int_arg(argc, argv, "-s", 0);
-    double size = sqrt(density * num_parts);
 
-    particle_t* parts = new particle_t[num_parts];
+    result_type* callPut = new result_type;
+    callPut->call = 0.0;
+    callPut->put = 0.0;
 
-    init_particles(parts, num_parts, size, part_seed);
-
-    particle_t* parts_gpu;
-    cudaMalloc((void**)&parts_gpu, num_parts * sizeof(particle_t));
-    cudaMemcpy(parts_gpu, parts, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
+    // result_type* callPut_gpu;
+    // cudaMalloc((void**)&callPut_gpu, sizeof(result_type));
+    // cudaMemcpy(callPut_gpu, callPut, sizeof(result_type), cudaMemcpyHostToDevice);
 
     // Algorithm
     auto start_time = std::chrono::steady_clock::now();
 
-    init_simulation(parts_gpu, num_parts, size);
+    init_sim(callPut, num_iterations);
 
-    for (int step = 0; step < nsteps; ++step) {
-        simulate_one_step(parts_gpu, num_parts, size);
-        cudaDeviceSynchronize();
-
-        // Save state if necessary
-        if (fsave.good() && (step % savefreq) == 0) {
-            cudaMemcpy(parts, parts_gpu, num_parts * sizeof(particle_t), cudaMemcpyDeviceToHost);
-            save(fsave, parts, num_parts, size);
-        }
-    }
-
+    // cudaMemcpy(callPut, callPut_gpu, sizeof(result_type), cudaMemcpyDeviceToHost);
+    monte_carlo_both_price(callPut, num_iterations);
     cudaDeviceSynchronize();
     auto end_time = std::chrono::steady_clock::now();
 
     std::chrono::duration<double> diff = end_time - start_time;
     double seconds = diff.count();
 
+    theta_type call = callPut->call;
+    theta_type put = callPut->put;
+    // Finally we output the parameters and prices
+    std::cout << "Testbench" << std::endl;
+    std::cout << "Number of Paths: " << num_iterations << std::endl;
+    std::cout << "Underlying:      " << S << std::endl;
+    std::cout << "Strike:          " << K << std::endl;
+    std::cout << "Risk-Free Rate:  " << r << std::endl;
+    std::cout << "Volatility:      " << v << std::endl;
+    std::cout << "Maturity:        " << T << std::endl;
+
+    std::cout << "Call Price:      " << call << std::endl;
+    std::cout << "Put Price:       " << put << std::endl;
     // Finalize
-    std::cout << "Simulation Time = " << seconds << " seconds for " << num_parts << " particles.\n";
-    fsave.close();
-    cudaFree(parts_gpu);
-    delete[] parts;
+    std::cout << "Simulation Time = " << seconds << " seconds for " << num_iterations << " iterations.\n";
+    // cudaFree(callPut_gpu);
+    delete[] callPut;
 }
