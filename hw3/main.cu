@@ -80,14 +80,14 @@ int main(int argc, char** argv) {
     callPut->call = 0.0;
     callPut->put = 0.0;
 
-    // result_type* callPut_gpu;
-    // cudaMalloc((void**)&callPut_gpu, sizeof(result_type));
-    // cudaMemcpy(callPut_gpu, callPut, sizeof(result_type), cudaMemcpyHostToDevice);
+    result_type* callPut_gpu;
+    cudaMalloc((void**)&callPut_gpu, sizeof(result_type));
+    cudaMemcpy(callPut_gpu, callPut, sizeof(result_type), cudaMemcpyHostToDevice);
 
     // Algorithm
     auto start_time = std::chrono::steady_clock::now();
 
-    init_sim(callPut, num_iterations);
+    init_sim();
 
     // cudaMemcpy(callPut, callPut_gpu, sizeof(result_type), cudaMemcpyDeviceToHost);
     monte_carlo_both_price(callPut, num_iterations);
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
     theta_type put = callPut->put;
     // Finally we output the parameters and prices
     std::cout << "Testbench" << std::endl;
-    std::cout << "Number of Paths: " << num_iterations << std::endl;
+    std::cout << "Number of Paths: " << num_iterations  << std::endl;
     std::cout << "Underlying:      " << S << std::endl;
     std::cout << "Strike:          " << K << std::endl;
     std::cout << "Risk-Free Rate:  " << r << std::endl;
@@ -112,6 +112,6 @@ int main(int argc, char** argv) {
     std::cout << "Put Price:       " << put << std::endl;
     // Finalize
     std::cout << "Simulation Time = " << seconds << " seconds for " << num_iterations << " iterations.\n";
-    // cudaFree(callPut_gpu);
+    cudaFree(callPut_gpu);
     delete[] callPut;
 }
