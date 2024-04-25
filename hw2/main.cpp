@@ -16,11 +16,11 @@ int find_arg_idx(int argc, char** argv, const char* option) {
     return -1;
 }
 
-int find_int_arg(int argc, char** argv, const char* option, int default_value) {
-    int iplace = find_arg_idx(argc, argv, option);
+long long find_int_arg(int argc, char** argv, const char* option, int default_value) {
+    long long iplace = find_arg_idx(argc, argv, option);
 
     if (iplace >= 0 && iplace < argc - 1) {
-        return std::stoi(argv[iplace + 1]);
+        return std::stoll(argv[iplace + 1]);
     }
 
     return default_value;
@@ -36,24 +36,19 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    int num_iterations = find_int_arg(argc, argv, "-s", 1000000);
+    long long num_iterations = find_int_arg(argc, argv, "-s", 1000000);
     // Algorithm
     auto start_time = std::chrono::steady_clock::now();
     init_sim();
     result_type result;
-#ifdef _OPENMP
-#pragma omp parallel default(shared)
-#endif
-    {
-        // Calculate the call/put values via Monte Carlo
-        monte_carlo_both_price(result,num_iterations);
-    }
+    // Calculate the call/put values via Monte Carlo
+    monte_carlo_both_price(result,num_iterations);
 
     theta_type call = result.call;
     theta_type put = result.put;
     // Finally we output the parameters and prices
     std::cout << "Testbench" << std::endl;
-    std::cout << "Number of Paths: " << num_sims << std::endl;
+    std::cout << "Number of Paths: " << num_iterations << std::endl;
     std::cout << "Underlying:      " << S << std::endl;
     std::cout << "Strike:          " << K << std::endl;
     std::cout << "Risk-Free Rate:  " << r << std::endl;
@@ -68,5 +63,5 @@ int main(int argc, char** argv) {
     std::chrono::duration<double> diff = end_time - start_time;
     double seconds = diff.count();
     // Finalize
-    std::cout << "Simulation Time = " << seconds << "\n";
+    std::cout << "Simulation Time = " << seconds << " num iterations: " << num_iterations << "\n";
 }

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   theta_type put = result.put;
   // Finally we output the parameters and prices
   std::cout << "Testbench" << std::endl;
-  std::cout << "Number of Paths: " << num_sims << std::endl;
+  std::cout << "Number of Paths: " << 1000000 << std::endl;
   std::cout << "Underlying:      " << S << std::endl;
   std::cout << "Strike:          " << K << std::endl;
   std::cout << "Risk-Free Rate:  " << r << std::endl;
